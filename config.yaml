@@ -1,0 +1,87 @@
+credentials:
+  usernames:
+    TI:
+      email: ti@divimed.com.br
+      name: Eduardo Faria
+      password: $2b$12$VivVYWfmsDSuPJyhjnBaEOEJjRTdbcOFO3ffSB1qD2PihvmWZ61ZS
+      role: "admin"
+
+    TI02:
+      email: ti02@divimed.com.br
+      name: Raniel Veiga
+      password: $2b$12$VivVYWfmsDSuPJyhjnBaEOEJjRTdbcOFO3ffSB1qD2PihvmWZ61ZS
+      role: "admin"
+
+    TI03:
+      email: ti03@divimed.com.br
+      name: Eduardo Rabelo
+      password: $2b$12$VivVYWfmsDSuPJyhjnBaEOEJjRTdbcOFO3ffSB1qD2PihvmWZ61ZS
+      role: "admin"
+
+    Heron-Oliveira:
+      email: heron@divimed.com.br
+      name: Heron Oliveira
+      password: $2b$12$IM.JhsxW8w8BYov0v/Jaj.uZVJxMzcmGKGX7p2ghgTzzux4sjaCdu
+      role: "diretoria"
+
+    Maycon-Diretoria:
+      email: comercial@divimed.com.br
+      name: Maycon Oliveira
+      password: $2b$12$VivVYWfmsDSuPJyhjnBaEOEJjRTdbcOFO3ffSB1qD2PihvmWZ61ZS
+      role: "diretoria"
+
+    Victor-Gerente:
+      email: victordivimed@gmail.com
+      name: Victor Hugo
+      password: $2b$12$VivVYWfmsDSuPJyhjnBaEOEJjRTdbcOFO3ffSB1qD2PihvmWZ61ZS
+      role: "gerente"
+
+    VITOR:
+      email: vitordivimed@gmail.com
+      name: VITOR
+      password: $2b$12$VivVYWfmsDSuPJyhjnBaEOEJjRTdbcOFO3ffSB1qD2PihvmWZ61ZS
+      role: "supervisor"
+      supervisor: "VITOR"
+
+    IUSSEF:
+      email: iussef.divimed@gmail.com
+      name: IUSSEF
+      password: $2b$12$VivVYWfmsDSuPJyhjnBaEOEJjRTdbcOFO3ffSB1qD2PihvmWZ61ZS
+      role: "supervisor"
+      supervisor: "IUSSEF"
+
+    CARLINHO:
+      email: carlinhos.divimed@gmail.com
+      name: CARLINHO
+      password: $2b$12$VivVYWfmsDSuPJyhjnBaEOEJjRTdbcOFO3ffSB1qD2PihvmWZ61ZS
+      role: "supervisor"
+      supervisor: "CARLINHO"
+
+    Carine-Televendas:
+      email: gerenciatelenvedas@divimed.com.br
+      name: Carine
+      password: $2b$12$VivVYWfmsDSuPJyhjnBaEOEJjRTdbcOFO3ffSB1qD2PihvmWZ61ZS
+      role: "televendas"
+
+    Thalita-Inteligencia:
+      email: vendas09@divimed.com.br
+      name: Thalita
+      password: $2b$12$VivVYWfmsDSuPJyhjnBaEOEJjRTdbcOFO3ffSB1qD2PihvmWZ61ZS
+      role: "inteligencia"
+
+    Deborah-Inteligencia:
+      email: vendas13@divimed.com.br
+      name: Deborah
+      password: $2b$12$VivVYWfmsDSuPJyhjnBaEOEJjRTdbcOFO3ffSB1qD2PihvmWZ61ZS
+      role: "inteligencia"
+
+    Parametrizacao:
+      email: teste@divimed.com.br
+      name: Parametrizacao
+      password: $2b$12$VivVYWfmsDSuPJyhjnBaEOEJjRTdbcOFO3ffSB1qD2PihvmWZ61ZS
+      role: "Parametrizacao"
+
+cookie:
+  expiry_days: 1
+  key: 5ef68d509c6af3db3ace512120b31632cfceb7f044acf17bc2f1d36c0fae8c38
+  name: cookie_relatorios_vendas

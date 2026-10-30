@@ -1,0 +1,89 @@
+DOCUMENTAÇÃO DO PROJETO DO BI:
+- Bibliotecas a Instalar (Dependências)
+	- Lista para o requirements.txt:
+	- streamlit (Importado como st);
+	- streamlit-authenticator (Importado como stauth para gerenciar login);
+	- PyYAML (Importado como yaml para ler o config.yaml);
+	- pandas (Importado como pd para manipulação de dados);
+	- pyodbc (Para conexão com o banco de dados SQL Server);
+	- plotly (Importado como px para os gráficos interativos);
+	- holidays (Para identificar feriados e dias úteis).
+	- Nota: Módulos como datetime e calendar são nativos da linguagem Python e não precisam ser instalados via pip.
+
+- config.yaml:
+	- Define credentials, com usernames sendo filho, com email, name, password e role sendo filhos;
+	- roles são "admin", "diretoria", "gerente", "supervisor", "televendas";
+	- password deve ser armazenada como hash.
+	- Define o tempo de cookie como 1 dia, para que ao final de 24 horas se faça necessário que o usuário faça login novamente.
+
+- gerador_hash.py:
+	- armazena função para gerar hash e exibe o hash no terminal.
+
+- .streamlit/secret.toml:
+	- armazena informações do database [driver; server; database; trusted_connection="yes"]
+
+- main.py:
+	- Gera tela de login;
+	- Valida se existe usuário, compara se a senha equivale ao hash armazenado em config.yaml e captura a "role" do usuário;
+	- Baseado na "role", exibe as páginas de relatórios permitidos para o "role" do usuário logado;
+	- Exibe na barra de navegação o nome do usuário, a "role", as páginas permitidas e botão de Sair.
+	- Conecta no banco de dados e armazena o cookie para abrir o usuário toda vez que o link do BI for acessado na janela de 24h.
+
+- queries/vendas_queries.py:
+	- Armazena o dicionário TELEVENDAS_MAP que vincula os nomes das operadoras de televendas aos seus respectivos códigos de digitador.
+	- _get_base_cte(): Gera e retorna o trecho "Base" da consulta SQL (uma CTE - Common Table Expression). Ele centraliza as regras de negócio mais complexas: define qual supervisor atende qual setor de venda e, de forma dinâmica, 		ajusta as colunas caso a consulta seja para o painel de "televendas" (convertendo códigos de digitadores em nomes legíveis).
+	- get_lista_vendedores(): Retorna a query SQL para listar os vendedores. Se um supervisor for especificado, ele filtra e traz apenas os vendedores que estão debaixo do "guarda-chuva" daquele supervisor específico.
+	- get_lista_supervisores(): Retorna a query SQL que busca a lista de todos os supervisores do banco de dados e adiciona (via UNION) supervisores regionais ou específicos que não vêm direto da tabela padrão.
+	- get_kpis_agregados(): Junta a base (_get_base_cte) com uma query que calcula os principais indicadores de performance (KPIs): Valor Total vendido, Positivação, Mix de Produtos e Quantidade de Notas Emitidas.
+	- get_grafico_origem(): Retorna a query que soma o valor total das vendas e as agrupa de acordo com a origem do título (ex: se veio de um sistema específico, de uma devolução, etc).
+	- get_grafico_venda_diaria(): Retorna a query que soma os valores de vendas agrupados dia a dia, estruturando os dados de forma ideal para gráficos de linha ou barras temporais.
+	- get_top_produtos(): Retorna a query que calcula tanto o valor financeiro total quanto a quantidade física vendida por cada Produto, servindo para montar rankings de produtos mais vendidos.
+	- get_detalhamento_tabela(): Retorna a query que fornece um relatório mais "cru" e detalhado, abrindo as vendas dia a dia, discriminadas por Vendedor e Supervisor.
+
+- queries/financeiro_queries.py:
+	- _get_base_contas_cte(): Gera e retorna o trecho "BaseContas" (uma CTE). Ela padroniza e limpa os dados direto no SQL (usando UPPER, RTRIM e LTRIM para as colunas de operação e situação) e cruza as tabelas de títulos, parcelas e 	clientes, filtrando pelo período de vencimento e tipo de documento.
+	- get_kpis_financeiros(): Retorna a query que calcula os 5 indicadores principais do painel financeiro: Total Pago (compras liquidadas), Total a Pagar (compras em aberto), Total a Receber (vendas em aberto), Total Recebido 			(vendas liquidadas) e Total a Receber Vencido (vendas em aberto com data anterior a hoje).
+	- get_fluxo_caixa_mensal(): Retorna a query que soma os valores das parcelas agrupando-os por Mês/Ano e pela situação da parcela. É ideal para montar gráficos de barras de fluxo de caixa mensal.
+	- get_ranking_devedores(): Retorna a query que lista o "Top N" (padrão de 10) de clientes com os maiores saldos devedores (títulos que não estão pagos/liquidados).
+	- get_comparativo_operacao(): Retorna a query que agrupa e soma o valor total separando por tipo de operação (compra/venda) e pela situação da parcela.
+	- get_dados_graficos(): Retorna uma query estruturalmente idêntica à get_comparativo_operacao, servindo para alimentar gráficos dinâmicos com o total por operação e situação.
+	- get_ranking_geral(): Retorna a query que lista os clientes e o valor total que eles têm em aberto, quebrado por tipo de operação.
+	- get_detalhe_contas(): Retorna a query com a listagem "bruta" e detalhada de todas as contas da CTE base, ordenada pela data de vencimento. O objetivo aqui é carregar os dados no Pandas e fazer os filtros mais finos direto no 		Python.
+
+- pages/page_venda_geral:
+
+	- Configurações iniciais: Importa bibliotecas necessárias, define o calendário de feriados (focado em MG) e cria a função is_business_day para avaliar dias úteis.
+	- Recuperação de Perfil: Lê o session_state para descobrir a "role" do usuário logado e define a flag is_televendas_flag, adaptando dinamicamente a interface (como o título da página e os filtros).
+	- get_connection(): Estabelece a conexão com o banco via pyodbc utilizando as credenciais salvas nos secrets do Streamlit.
+	- Consultas em Cache (run_query_lista_supervisores, run_query_lista_vendedores): Executa as listagens de filtros e as mantém cacheadas em memória (TTL de 1 hora) para evitar requisições repetitivas no banco.
+	- run_query_custom(): Executa as queries de dados passando as datas escolhidas. Possui uma trava de segurança que ajusta a data_fim para "23:59:59", garantindo a captura do último milissegundo do dia.
+	- Helpers de Manipulação (filtrar_dados, extrair_kpi): O primeiro fatia o dataframe já salvo na memória (RAM) conforme os filtros da tela; o segundo extrai os valores brutos para alimentar os cards (faturamento, positivação, mix 		e notas).
+	- Layout e Filtros: Monta o cabeçalho, botão de atualização de dados e exibe dinamicamente os selectboxes (Se for televendas, exibe a lista do dicionário; se não, exibe a cascata de Supervisor -> Vendedor) e o filtro de período.
+	- buscar_todos_dados(): É o motor principal da página. Com um único "loading", realiza múltiplas consultas simultâneas no banco (mês atual, mês anterior, YTD, dados de gráficos e tabelas) e armazena tudo em cache para navegação 		rápida.
+	- Cálculos e Deltas: Processa a matemática final da tela (como somar os dias do televendas para bater com o KPI exato), calcula tickets médios, a projeção matemática de faturamento para o fim do mês, e os percentuais (deltas) 		comparando o cenário atual com o mês/ano anterior.
+	- Exibição de Cards (KPIs): Mostra 5 métricas principais no topo em colunas, indicando os valores, percentuais de crescimento/queda e as projeções.
+	Gráficos:
+	- Origem: Gráfico de rosca (pizza) mostrando a distribuição do valor por origem do título.
+	- Venda Diária: Gera o gráfico combinado exibindo o volume diário através de barras verticais e uma linha percorrendo esses mesmos pontos com a média/tendência.
+	- Top 10 Produtos: Gráfico de barras horizontais, onde um rádio permite alternar entre visualizar os top produtos por "Valor" financeiro ou "Quantidade" física (calculado direto no Pandas).
+	Tabelas de Detalhamento:
+	- Transforma os dados em uma Pivot Table (matriz de Vendedor x Dias do mês).
+	- Se for visão Televendas: Exibe a tabela aberta com uma linha extra de "TOTAL GERAL" somando todas as colunas.
+	- Se for visão Supervisor: Agrupa os vendedores dentro de expanders separando a visualização por cada supervisor.
+
+- pages/page_financeiro.py:
+
+	- get_connection(): Estabelece a conexão com o banco de dados.
+	- run_query(): Executa as consultas financeiras e realiza uma etapa de Limpeza/Normalização no Pandas. Ele remove espaços em branco (strip), joga a situação para maiúsculo e capitaliza o nome da operação para garantir que os 		filtros da interface cruzem perfeitamente com os dados.
+	- formata_real(): Transforma os valores de ponto flutuante no padrão monetário brasileiro (R$ 0.000,00).
+	- Filtros Globais: Utiliza um expander no topo da página para centralizar as seleções de Data de Início e Fim que controlarão todo o dashboard financeiro.
+	- KPIs Iniciais: Consome a query de KPIs financeiros e imprime 5 métricas lado a lado (Total Pago, Total a Pagar, Total a Receber, Total Recebido e A Receber Vencido).
+
+	Gráficos Dinâmicos:
+	- Valor por Operação: Renderiza um gráfico de barras usando filtros via botões de opção (radio buttons) para alternar a visualização instantaneamente entre títulos em "ABERTO" e "PAGO".
+	- Top 10 por Tipo: Gráfico de barras horizontais exibindo o ranking de maiores devedores/clientes. Usa um botão para alternar entre "Venda" e "Compra", mudando também a cor das barras conforme a escolha.
+	Detalhamento com Paginação:
+
+	- Divide os dados brutos de títulos em aberto em duas abas ("Vendas a Receber" e "Compras a Pagar").
+	- A função genérica render_tabela_paginada() implementa um sistema de paginação visual usando o session_state do Streamlit. Ela exibe lotes de 15 linhas por página com botões de "Avançar" e "Voltar", evitando que tabelas enormes 		travem ou dificultem a rolagem da interface.
+	- Ranking Consolidado: Cria e exibe um DataFrame estilizado usando a função colorir_operacao aplicada ao .style. Ele avalia a regra de negócio e pinta a linha inteira da tabela de verde (se for Venda) ou vermelho (se for 			Compra/Devolução), entregando um relatório visual e ordenado pelo maior volume financeiro.
